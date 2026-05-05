@@ -1,0 +1,14 @@
+[project]
+name = "personal-note-manager-backend"
+version = "0.1.0"
+description = "Backend for Personal Note Manager"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "sqlalchemy",
+  "alembic",
+  "psycopg[binary]",
+  "pydantic",
+  "python-multipart",
+]
