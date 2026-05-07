@@ -46,7 +46,7 @@ class MailService:
 
     def send_verification_email(self, to_email: str, verification_link: Optional[str] = None) -> None:
         subject = "Verify your Personal Note Manager account"
-        link = verification_link or "http://localhost:5174"
+        link = verification_link or settings.frontend_url
         html = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">

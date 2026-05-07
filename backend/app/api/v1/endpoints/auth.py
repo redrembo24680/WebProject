@@ -9,6 +9,7 @@ from app.core.security import verify_password, create_access_token, decode_acces
 from app.schemas.user import UserCreate, UserRead
 from app.core.security import get_password_hash
 from app.services.mail_service import MailService
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -53,7 +54,8 @@ async def register(
 	def _send():
 		print(f"[AUTH] Sending verification email to {user.email}")
 		verification_token = create_access_token(subject=str(user.id))
-		verification_link = f"http://localhost:5174/verify?token={verification_token}"
+		frontend = settings.frontend_url.rstrip("/")
+		verification_link = f"{frontend}/verify?token={verification_token}"
 		MailService().send_verification_email(user.email, verification_link=verification_link)
 		print(f"[AUTH] Email send task completed for {user.email}")
 

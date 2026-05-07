@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     smtp_user: str
     smtp_password: str
     allowed_origins: str = "http://localhost:5174,http://localhost:3000"
+    frontend_url: str = "http://localhost:5174"
 
     @field_validator("database_url", mode="before")
     @classmethod
