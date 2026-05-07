@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
@@ -28,7 +28,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 
 
 @router.post("/register", response_model=UserRead, status_code=201)
-async def register(payload: UserCreate, db: Session = Depends(get_db_session)):
+async def register(
+	payload: UserCreate,
+	background_tasks: BackgroundTasks,
+	db: Session = Depends(get_db_session),
+):
 	def _get_existing():
 		return db.query(User).filter(User.email == payload.email).first()
 
@@ -45,7 +49,7 @@ async def register(payload: UserCreate, db: Session = Depends(get_db_session)):
 
 	user = await run_in_threadpool(_create_user)
 
-	# send verification email with token
+	# send verification email after the response is returned
 	def _send():
 		print(f"[AUTH] Sending verification email to {user.email}")
 		verification_token = create_access_token(subject=str(user.id))
@@ -53,7 +57,7 @@ async def register(payload: UserCreate, db: Session = Depends(get_db_session)):
 		MailService().send_verification_email(user.email, verification_link=verification_link)
 		print(f"[AUTH] Email send task completed for {user.email}")
 
-	await run_in_threadpool(_send)
+	background_tasks.add_task(_send)
 	return user
 
 
