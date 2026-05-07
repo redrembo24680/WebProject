@@ -1,7 +1,7 @@
-import smtplib
+import json
 import logging
-from email.message import EmailMessage
 from typing import Optional
+from urllib import request, error
 
 from app.core.config import settings
 
@@ -12,27 +12,34 @@ class MailService:
     def send_email(self, to_email: str, subject: str, html_content: str) -> None:
         try:
             print(f"[MAIL] Attempting to send email to {to_email}")
-            print(f"[MAIL] SMTP Host: {settings.smtp_host}, User: {settings.smtp_user}")
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = "cisinskijroman@gmail.com"
-            msg["To"] = to_email
-            msg.set_content(html_content, subtype="html")
+            print(f"[MAIL] Using Brevo API with sender: cisinskijroman@gmail.com")
 
-            with smtplib.SMTP(settings.smtp_host, 587) as smtp:
-                print(f"[MAIL] SMTP connection established")
-                smtp.starttls()
-                print(f"[MAIL] TLS enabled")
-                if settings.smtp_user and settings.smtp_password:
-                    print(f"[MAIL] Authenticating...")
-                    smtp.login(settings.smtp_user, settings.smtp_password)
-                    print(f"[MAIL] Authentication successful")
-                smtp.send_message(msg)
-            print(f"[MAIL] ✅ Email sent to {to_email}")
-            logger.info(f"Email sent successfully to {to_email}")
-        except smtplib.SMTPAuthenticationError as e:
-            print(f"[MAIL] ❌ Auth failed: {e}")
-            logger.error(f"SMTP Authentication failed: {str(e)}")
+            payload = {
+                "sender": {"name": "Personal Note Manager", "email": "cisinskijroman@gmail.com"},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": html_content,
+            }
+
+            req = request.Request(
+                "https://api.brevo.com/v3/smtp/email",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                    "api-key": settings.smtp_password,
+                },
+                method="POST",
+            )
+
+            with request.urlopen(req, timeout=20) as resp:
+                response_body = resp.read().decode("utf-8")
+                print(f"[MAIL] ✅ Email sent to {to_email}: {response_body}")
+                logger.info(f"Email sent successfully to {to_email}")
+        except error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="ignore")
+            print(f"[MAIL] ❌ Brevo API error: {e.code} {body}")
+            logger.error(f"Brevo API error: {e.code} {body}")
         except Exception as e:
             print(f"[MAIL] ❌ Error: {type(e).__name__}: {e}")
             logger.error(f"Failed to send email: {type(e).__name__}: {str(e)}")
