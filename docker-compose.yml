@@ -1,10 +1,11 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: personal_note_manager
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-personal_note_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-personal_note_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-personal_note_password}
     ports:
       - "5432:5432"
 
@@ -13,5 +14,23 @@ services:
       context: ./backend
     ports:
       - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    volumes:
+      - ./backend/static:/app/static
+    depends_on:
+      - db
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "8080:8080"
     depends_on:
       - db

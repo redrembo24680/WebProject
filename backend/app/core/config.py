@@ -1,12 +1,22 @@
-from pydantic import BaseModel
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseModel):
-    project_name: str = "Personal Note Manager"
-    database_url: str = "postgresql+psycopg://user:password@db:5432/personal_note_manager"
-    jwt_secret_key: str = "change-me"
-    brevo_api_key: str = ""
-    brevo_sender_email: str = ""
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    database_url: str
+    jwt_secret: str
+    smtp_host: str
+    smtp_user: str
+    smtp_password: str
+    allowed_origins: str = "http://localhost:5174,http://localhost:3000"
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
