@@ -9,7 +9,11 @@ from app.core.config import settings
 app = FastAPI(title="Personal Note Manager")
 
 # Add CORS middleware with configurable origins
-allowed_origins = [origin.strip() for origin in settings.allowed_origins.split(",")]
+allowed_origins = [
+    origin.strip().rstrip("/")
+    for origin in settings.allowed_origins.split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
