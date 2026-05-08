@@ -8,6 +8,7 @@ interface UseNotesReturn {
   fetchNotes: () => Promise<void>;
   createNote: (title: string, content: string, file?: File) => Promise<Note>;
   deleteNote: (id: number) => Promise<void>;
+  editNote: (id: number, title?: string, content?: string, file?: File) => Promise<Note>;
 }
 
 export const useNotes = (): UseNotesReturn => {
@@ -59,6 +60,20 @@ export const useNotes = (): UseNotesReturn => {
     }
   }, []);
 
+  const editNote = useCallback(async (id: number, title?: string, content?: string, file?: File): Promise<Note> => {
+    setError(null);
+    try {
+      const response = await notesService.update(id, title, content, file);
+      const updated = response.data;
+      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+      return updated;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || 'Failed to update note';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, []);
+
   // Fetch notes on component mount
   useEffect(() => {
     fetchNotes();
@@ -71,5 +86,6 @@ export const useNotes = (): UseNotesReturn => {
     fetchNotes,
     createNote,
     deleteNote,
+    editNote,
   };
 };

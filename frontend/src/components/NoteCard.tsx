@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Trash2, Loader, Heart } from 'lucide-react';
+import { Trash2, Loader, Heart, Edit2 } from 'lucide-react';
 import { Note } from '../services/authService';
 import ConfirmationModal from './ConfirmationModal';
+import { NoteForm } from './NoteForm';
 
 interface NoteCardProps {
   note: Note;
   onDelete: (id: number) => Promise<void>;
+  onEdit: (id: number, title?: string, content?: string, file?: File) => Promise<void>;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
+export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
@@ -29,6 +31,18 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
       setError(err.message);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const [showEdit, setShowEdit] = useState(false);
+
+  const handleEditSubmit = async (title: string, content: string, file?: File) => {
+    setError(null);
+    try {
+      await onEdit(note.id, title, content, file);
+      setShowEdit(false);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -75,18 +89,48 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
 
       {/* Content */}
       <div className="relative p-5 flex flex-col h-full z-20">
-        {/* Like Button */}
-        <div className="flex justify-end mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button
-            onClick={() => setIsLiked(!isLiked)}
-            className={`p-2 rounded-full transition-all duration-200 ${
-              isLiked
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-600/50 text-gray-300 hover:bg-red-600/20 hover:text-red-400'
-            }`}
-          >
-            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-          </button>
+        {/* Top controls */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsLiked(!isLiked)}
+              className={`p-2 rounded-full transition-all duration-200 ${
+                isLiked
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-600/50 text-gray-300 hover:bg-red-600/20 hover:text-red-400'
+              }`}
+            >
+              <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowEdit(true)}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg active:scale-95"
+            >
+              <Edit2 size={16} />
+              <span className="text-sm">Редагувати</span>
+            </button>
+
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader size={16} className="animate-spin" />
+                  <span className="text-sm">Видалення...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  <span className="text-sm">Видалити</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Title */}
@@ -111,24 +155,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
           </div>
         )}
 
-        {/* Delete Button */}
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
-        >
-          {isDeleting ? (
-            <>
-              <Loader size={16} className="animate-spin" />
-              <span className="text-sm">Видалення...</span>
-            </>
-          ) : (
-            <>
-              <Trash2 size={16} />
-              <span className="text-sm">Видалити</span>
-            </>
-          )}
-        </button>
         {showConfirm && (
           <ConfirmationModal
             title="Видалити нотатку"
@@ -137,6 +163,16 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
             cancelLabel="Скасувати"
             onConfirm={confirmDelete}
             onCancel={() => setShowConfirm(false)}
+          />
+        )}
+
+        {showEdit && (
+          <NoteForm
+            onSubmit={handleEditSubmit}
+            onClose={() => setShowEdit(false)}
+            initialTitle={note.title}
+            initialContent={note.content}
+            submitLabel="Оновити"
           />
         )}
       </div>

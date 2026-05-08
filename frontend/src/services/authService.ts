@@ -33,9 +33,8 @@ export const authService = {
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
-    return client.post<LoginResponse>('/auth/login', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // let the browser set Content-Type
+    return client.post<LoginResponse>('/auth/login', formData);
   },
 
   verify: (token: string) =>
@@ -43,7 +42,7 @@ export const authService = {
 };
 
 export const notesService = {
-  getAll: () => client.get<Note[]>('/notes'),
+  getAll: () => client.get<Note[]>('/notes/'),
 
   create: (title: string, content: string, file?: File) => {
     const formData = new FormData();
@@ -52,9 +51,16 @@ export const notesService = {
     if (file) {
       formData.append('file', file);
     }
-    return client.post<Note>('/notes', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // let the browser set Content-Type
+    return client.post<Note>('/notes', formData);
+  },
+
+  update: (id: number, title?: string, content?: string, file?: File) => {
+    const formData = new FormData();
+    if (title !== undefined) formData.append('title', title);
+    if (content !== undefined) formData.append('content', content);
+    if (file) formData.append('file', file);
+    return client.patch<Note>(`/notes/${id}`, formData);
   },
 
   delete: (id: number) => client.delete(`/notes/${id}`),

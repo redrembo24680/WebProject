@@ -12,14 +12,10 @@ services:
   backend:
     build:
       context: ./backend
+    env_file:
+      - .env
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
     volumes:
       - ./backend/static:/app/static
     depends_on:

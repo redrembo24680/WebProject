@@ -7,7 +7,7 @@ import { NoteForm } from '../components/NoteForm';
 
 export const DashboardPage: React.FC = () => {
   const { logout, user } = useAuth();
-  const { notes, loading, error, createNote, deleteNote } = useNotes();
+  const { notes, loading, error, createNote, deleteNote, editNote } = useNotes();
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -147,6 +147,9 @@ export const DashboardPage: React.FC = () => {
                     <NoteCard
                       note={note}
                       onDelete={deleteNote}
+                      onEdit={async (id, title, content, file) => {
+                        await editNote(id, title, content, file);
+                      }}
                     />
                   </div>
                 ))}

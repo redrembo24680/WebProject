@@ -68,3 +68,48 @@ async def delete_note(note_id: int, current_user: User = Depends(get_current_use
 
 	await run_in_threadpool(_delete)
 	return None
+
+
+
+@router.patch("/{note_id}", response_model=NoteRead)
+async def update_note(
+	note_id: int,
+	title: Optional[str] = Form(None),
+	content: Optional[str] = Form(None),
+	file: Optional[UploadFile] = File(None),
+	current_user: User = Depends(get_current_user),
+	db: Session = Depends(get_db_session),
+):
+	def _get_note():
+		return db.query(Note).filter(Note.id == note_id).first()
+
+	note = await run_in_threadpool(_get_note)
+	if not note:
+		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+	if note.user_id != current_user.id:
+		raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to edit this note")
+
+	file_service = FileService()
+	# handle file replacement
+	if file:
+		# save new file
+		new_image = await file_service.save_upload(file)
+		# delete old file
+		if note.image_url:
+			await run_in_threadpool(lambda: file_service.delete_file(note.image_url))
+		note.image_url = new_image
+
+	# update fields if provided
+	if title is not None:
+		note.title = title
+	if content is not None:
+		note.content = content
+
+	def _save():
+		db.add(note)
+		db.commit()
+		db.refresh(note)
+		return note
+
+	updated = await run_in_threadpool(_save)
+	return updated
