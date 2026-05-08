@@ -29,3 +29,29 @@ class FileService:
 
         # return relative path
         return os.path.relpath(dest_path, os.getcwd()).replace("\\", "/")
+
+    def delete_file(self, relative_path: Optional[str]) -> None:
+        """Delete a previously saved file given its relative path.
+
+        This method is defensive: it only deletes files that live under the
+        configured upload directory to avoid accidental/unsafe deletes.
+        """
+        if not relative_path:
+            return
+
+        # Normalize and build absolute path
+        try:
+            # Protect against absolute paths or path traversal
+            rel = relative_path.replace("/", os.path.sep).lstrip(os.path.sep)
+            target_path = os.path.normpath(os.path.join(os.getcwd(), rel))
+            upload_dir_norm = os.path.normpath(self.upload_dir)
+
+            if not target_path.startswith(upload_dir_norm):
+                # Don't delete files outside upload dir
+                return
+
+            if os.path.exists(target_path):
+                os.remove(target_path)
+        except Exception:
+            # Swallow errors - deletion is a best-effort cleanup
+            return

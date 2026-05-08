@@ -57,6 +57,11 @@ async def delete_note(note_id: int, current_user: User = Depends(get_current_use
 	if note.user_id != current_user.id:
 		raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this note")
 
+	# attempt to delete the associated image file (best-effort)
+	file_service = FileService()
+	if note.image_url:
+		await run_in_threadpool(lambda: file_service.delete_file(note.image_url))
+
 	def _delete():
 		db.delete(note)
 		db.commit()

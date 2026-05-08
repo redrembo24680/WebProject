@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Loader, Heart } from 'lucide-react';
 import { Note } from '../services/authService';
+import ConfirmationModal from './ConfirmationModal';
 
 interface NoteCardProps {
   note: Note;
@@ -13,16 +14,21 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
   const [isLiked, setIsLiked] = useState(false);
 
   const handleDelete = async () => {
-    if (window.confirm('Ви впевнені, що хочете видалити цю нотатку?')) {
-      setIsDeleting(true);
-      setError(null);
-      try {
-        await onDelete(note.id);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsDeleting(false);
-      }
+    setShowConfirm(true);
+  };
+
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const confirmDelete = async () => {
+    setShowConfirm(false);
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await onDelete(note.id);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -123,6 +129,16 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete }) => {
             </>
           )}
         </button>
+        {showConfirm && (
+          <ConfirmationModal
+            title="Видалити нотатку"
+            message={`Ви впевнені, що хочете назавжди видалити «${note.title}»?`}
+            confirmLabel="Видалити"
+            cancelLabel="Скасувати"
+            onConfirm={confirmDelete}
+            onCancel={() => setShowConfirm(false)}
+          />
+        )}
       </div>
     </div>
   );
