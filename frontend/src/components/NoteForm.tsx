@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Upload, Loader, Check } from 'lucide-react';
 
 interface NoteFormProps {
@@ -69,9 +70,9 @@ export const NoteForm: React.FC<NoteFormProps> = ({ onSubmit, onClose, initialTi
   };
 
   if (success) {
-    return (
+    const successModal = (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-in scale-in duration-300">
+        <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center animate-in scale-in duration-300" onClick={(e) => e.stopPropagation()}>
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
             <Check size={32} className="text-green-600" />
           </div>
@@ -80,17 +81,16 @@ export const NoteForm: React.FC<NoteFormProps> = ({ onSubmit, onClose, initialTi
         </div>
       </div>
     );
+    if (typeof document === 'undefined') return null;
+    return createPortal(successModal, document.body);
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700/50 animate-in scale-in duration-200">
+  const modal = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in" onClick={onClose}>
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700/50 animate-in scale-in duration-200" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="sticky top-0 flex items-center justify-between p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800 to-gray-800/95 backdrop-blur-sm">
-          <div>
-              <h2 className="text-2xl font-bold text-white">{submitLabel || 'Нова нотатка'}</h2>
-              <p className="text-xs text-gray-400 mt-1">Поділіться своєю думою</p>
-          </div>
+          <h3 className="text-lg font-semibold text-white">{submitLabel || 'Нова нотатка'}</h3>
           <button
             onClick={onClose}
             disabled={loading}
@@ -192,21 +192,24 @@ export const NoteForm: React.FC<NoteFormProps> = ({ onSubmit, onClose, initialTi
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 font-semibold shadow-lg hover:shadow-xl"
             >
-                  {loading ? (
-                    <>
-                      <Loader size={18} className="animate-spin" />
-                      {submitLabel ? `${submitLabel}...` : 'Створення...'}
-                    </>
-                  ) : (
-                    <>
-                      <Check size={18} />
-                      {submitLabel || 'Створити нотатку'}
-                    </>
-                  )}
+              {loading ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  {submitLabel ? `${submitLabel}...` : 'Створення...'}
+                </>
+              ) : (
+                <>
+                  <Check size={18} />
+                  {submitLabel || 'Створити нотатку'}
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modal, document.body);
 };

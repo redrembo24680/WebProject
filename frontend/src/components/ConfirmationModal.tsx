@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface Props {
   title?: string;
@@ -17,10 +18,10 @@ const ConfirmationModal: React.FC<Props> = ({
   onConfirm,
   onCancel,
 }) => {
-  return (
+  const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="bg-gray-800 rounded-lg p-6 z-10 w-full max-w-sm">
+      <div className="bg-gray-800 rounded-lg p-6 z-10 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
         <p className="text-sm text-gray-300 mb-4">{message}</p>
         <div className="flex justify-end gap-2">
@@ -40,6 +41,9 @@ const ConfirmationModal: React.FC<Props> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modal, document.body);
 };
 
 export default ConfirmationModal;
